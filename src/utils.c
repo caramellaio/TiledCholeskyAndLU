@@ -44,12 +44,12 @@ int Utils_read_matrix(FILE *file,
 
   for (i = 0; i < n; i++) {
     for (j = 0; j < m; j++) {
-      float val;
+      double val;
       int i_blk, j_blk;
       int i_pos, j_pos;
 
       /* get i,j value */
-      rv = fscanf(file, "%f", &val);
+      rv = fscanf(file, "%lf", &val);
       if (EOF == rv) goto read_matrix_exit;
 
       /* calculate coordinates */

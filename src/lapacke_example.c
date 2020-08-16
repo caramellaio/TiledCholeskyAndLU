@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 
   printf("Matrix info: \nside_size: %d\n block_n: %d\n block_m:%d\n",
          tiled.side_blk, tiled.n_blk, tiled.m_blk);
-  tiled.data = (float *)malloc(sizeof(float) * n * m);
+  tiled.data = (double *)malloc(sizeof(double) * n * m);
 
   rv = Utils_read_matrix(f, &tiled, n, m);
 
