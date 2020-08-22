@@ -54,7 +54,7 @@ void TiledCholesky_decompose(TiledMatrix *tiled)
       A_n_n = TiledMatrix_get_block(tiled, n, n);
       A_n_k = TiledMatrix_get_block(tiled, n, k);
       cblas_dsyrk(CblasRowMajor, CblasLower, CblasNoTrans,
-                  tiled->side_blk, tiled->side_blk, 1.,
+                  tiled->side_blk, tiled->side_blk, -1.,
                   A_n_k, tiled->side_blk, 1., A_n_n, tiled->side_blk);
 
       for (m = n + 1; m < t; m++) {
