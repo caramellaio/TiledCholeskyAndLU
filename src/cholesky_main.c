@@ -42,7 +42,7 @@ int main(int argc, char **argv)
   }
 
   printf("Printing input matrix:\n");
-  TiledMatrix_print(&tiled, stdout);
+  TiledMatrix_print(&tiled, stdout, PRINT_ALL);
 
   fclose(f);
 
@@ -53,7 +53,7 @@ int main(int argc, char **argv)
   printf("Tiled cholesky decomposition completed.\n");
 
   printf("Printing resulting matrix: \n");
-  TiledMatrix_print(&tiled, stdout);
+  TiledMatrix_print(&tiled, stdout, PRINT_TRIANG_LOWER);
 
   free(tiled.data);
 
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
   printf("Calling NON tiled cholesky decomposition.\n");
   TiledCholesky_non_tiled_decompose(tiled.data, tiled.side_blk);
   printf("Printing result: \n");
-  TiledMatrix_print(&tiled, stdout);
+  TiledMatrix_print(&tiled, stdout, PRINT_TRIANG_LOWER);
   main_end:
   return rv;
 }

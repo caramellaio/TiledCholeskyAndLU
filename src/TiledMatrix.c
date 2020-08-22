@@ -58,7 +58,7 @@ double TiledMatrix_get_val_non_tiled(const TiledMatrix* self,
   return TiledMatrix_get_at(self, blk_i, blk_j, pos_i, pos_j);
 }
 
-void TiledMatrix_print(const TiledMatrix* self, FILE *output)
+void TiledMatrix_print(const TiledMatrix* self, FILE *output, int print_mode)
 {
   int i, j;
   int n, m;
@@ -66,19 +66,29 @@ void TiledMatrix_print(const TiledMatrix* self, FILE *output)
   n = GET_N(self);
   m = GET_M(self);
 
+  PRINT_TRIANG_CHECK(print_mode);
+
   for (i = 0; i < n; i++) {
     for (j = 0; j < m; j++) {
       const char* format;
       double val;
 
       format = (j == m - 1) ? "%f\n" : "%f ";
-      val = TiledMatrix_get_val_non_tiled(self, i, j);
+      if (PRINT_ALL == print_mode ||
+          (i >= j && PRINT_TRIANG_LOWER == print_mode) ||
+          (j >= i && PRINT_TRIANG_UPPER == print_mode)) {
+        val = TiledMatrix_get_val_non_tiled(self, i, j);
+      }
+      else {
+        val = 0.;
+      }
 
       fprintf(output, format, val);
     }
   }
 }
 
+#if 0
 void TiledMatrix_set_triangular_part(TiledMatrix* self, TriangPart p,
                                      int blk_i, int blk_j, double val)
 {
@@ -99,3 +109,4 @@ void TiledMatrix_set_triangular_part(TiledMatrix* self, TriangPart p,
     }
   }
 }
+#endif

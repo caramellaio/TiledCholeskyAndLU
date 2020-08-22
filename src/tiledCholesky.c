@@ -27,7 +27,7 @@ void TiledCholesky_decompose(TiledMatrix *tiled)
 #ifdef VERBOSE
     printf("Info val = %d\n", info);
     printf("Printing matrix after %d-th dpotrf:\n", k);
-    TiledMatrix_print(tiled, stdout);
+    TiledMatrix_print(tiled, stdout, PRINT_TRIANG_LOWER);
 #endif
     for (m = k + 1; m < t; m++) {
       double* A_m_k;
