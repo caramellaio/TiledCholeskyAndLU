@@ -42,8 +42,8 @@ int Utils_read_matrix(FILE *file,
   int rv;
   int i, j;
 
-  for (i = 0; i < n; i++) {
-    for (j = 0; j < m; j++) {
+  for (j = 0; j < n; j++) {
+    for (i = 0; i < m; i++) {
       double val;
       int i_blk, j_blk;
       int i_pos, j_pos;
