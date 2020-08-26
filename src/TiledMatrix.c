@@ -6,61 +6,69 @@
 #define GET_M(self) \
   (self->m_blk * self->side_blk)
 
-double * TiledMatrix_get_block(const TiledMatrix* self,
-                              int i_blk, int j_blk)
+/* NOTE: row major */
+#define GET_ADDR(self, x_blk, y_blk, x, y) \
+  (TiledMatrix_get_block(self, x_blk, y_blk) + y * self->side_blk + x)
+
+/*
+  BLOCKS STRUCTURE:
+
+  block(0, 0) block(1, 0) ... block(n - 2, 0) block(n - 1, 0)
+  block(0, 1) block(1, 1) ... block(n - 2, 1) block(n - 1, 1)
+  ..........................................................
+  ..........................................................
+  ..........................................................
+  block(0, m - 2) block(1, m - 2) ... block(n - 2, m - 2) block(n - 1, m - 2)
+  block(0, m - 1) block(1, m - 1) ... block(n - 2, m - 1) block(n - 1, m - 1)
+
+  Note: blocks on the same x are contiguous e.g. block(2, 3) is near block(3, 3)
+*/
+double *TiledMatrix_get_block(const TiledMatrix *self,
+                              int x_blk, int y_blk)
 {
-  return self->data + i_blk * self->m_blk * self->side_blk * self->side_blk +
-                    j_blk * self->side_blk * self->side_blk;
+  /* a column is the length of n rows */
+  int add_y, add_x;
+
+  add_y = y_blk * self->n_blk * self->side_blk * self->side_blk;
+  add_x = x_blk * self->side_blk * self->side_blk;
+
+  return self->data + add_x + add_y;
 }
 
+
 void TiledMatrix_set_at(TiledMatrix* self,
-                        int i_blk, int j_blk,
-                        int i, int j, double val)
+                        int x_blk, int y_blk,
+                        int x, int y, double val)
 {
-  self->data[i_blk * self->m_blk * self->side_blk * self->side_blk +
-             j_blk * self->side_blk * self->side_blk +
-             i * self->side_blk + j] = val;
+  double *val_pointer = GET_ADDR(self, x_blk, y_blk, x, y);
+
+  *val_pointer = val;
 }
 
 double TiledMatrix_get_at(const TiledMatrix* self,
-                         int i_blk, int j_blk,
-                         int i, int j)
+                          int x_blk, int y_blk,
+                          int x, int y)
 {
-  return self->data[i_blk * self->m_blk * self->side_blk * self->side_blk +
-                    j_blk * self->side_blk * self->side_blk +
-                    i * self->side_blk + j];
+  return *(GET_ADDR(self, x_blk, y_blk, x, y));
 }
 
 double TiledMatrix_get_val_non_tiled(const TiledMatrix* self,
-                                    int i, int j)
+                                     int x, int y)
 {
-  int blk_i, blk_j, pos_i, pos_j;
+  int blk_x, blk_y, pos_x, pos_y;
 
-  if (1 == self->n_blk) {
-    blk_i = 0;
-    pos_i = i;
-  }
-  else {
-    blk_i = i / self->n_blk;
-    pos_i = i % self->n_blk;
-  }
+  blk_x = x / self->side_blk;
+  pos_x = x % self->side_blk;
 
+  blk_y = y / self->side_blk;
+  pos_y = y % self->side_blk;
 
-  if (1 == self->m_blk) {
-    blk_j = 0;
-    pos_j = j;
-  }
-  else {
-    blk_j = j / self->m_blk;
-    pos_j = j % self->m_blk;
-  }
-
-  return TiledMatrix_get_at(self, blk_i, blk_j, pos_i, pos_j);
+  return TiledMatrix_get_at(self, blk_x, blk_y, pos_x, pos_y);
 }
 
 void TiledMatrix_print(const TiledMatrix* self, FILE *output, int print_mode)
 {
-  int i, j;
+  int x, y;
   int n, m;
 
   n = GET_N(self);
@@ -68,16 +76,16 @@ void TiledMatrix_print(const TiledMatrix* self, FILE *output, int print_mode)
 
   PRINT_TRIANG_CHECK(print_mode);
 
-  for (i = 0; i < n; i++) {
-    for (j = 0; j < m; j++) {
+  for (y = 0; y < m; y++) {
+    for (x = 0; x < n; x++) {
       const char* format;
       double val;
 
-      format = (j == m - 1) ? "%f\n" : "%f ";
+      format = (x == m - 1) ? "%f\n" : "%f ";
       if (PRINT_ALL == print_mode ||
-          (i >= j && PRINT_TRIANG_LOWER == print_mode) ||
-          (j >= i && PRINT_TRIANG_UPPER == print_mode)) {
-        val = TiledMatrix_get_val_non_tiled(self, i, j);
+          (x >= y && PRINT_TRIANG_UPPER == print_mode) ||
+          (y >= x && PRINT_TRIANG_LOWER == print_mode)) {
+        val = TiledMatrix_get_val_non_tiled(self, x, y);
       }
       else {
         val = 0.;
@@ -87,26 +95,3 @@ void TiledMatrix_print(const TiledMatrix* self, FILE *output, int print_mode)
     }
   }
 }
-
-#if 0
-void TiledMatrix_set_triangular_part(TiledMatrix* self, TriangPart p,
-                                     int blk_i, int blk_j, double val)
-{
-  int i, j;
-  double *matrix;
-
-  matrix = TiledMatrix_get_block(self, blk_i, blk_j);
-
-  for (i = 0; i < self->side_blk; i++) {
-    for (j = i+1; j < self->side_blk; j++) {
-      if (UPPER_TRIANG == p) {
-        matrix[i * self->side_blk + j] = val;
-      }
-      else {
-        assert(LOWER_TRIANG == p);
-        matrix[j * self->side_blk + i] = val;
-      }
-    }
-  }
-}
-#endif
