@@ -32,19 +32,12 @@ void TiledCholesky_decompose(TiledMatrix *tiled)
     for (m = k + 1; m < t; m++) {
       double* A_m_k;
 
-      A_m_k = TiledMatrix_get_block(tiled, m, k);
+      A_m_k = TiledMatrix_get_block(tiled, k, m);
 
-
-#if 0
-      info = LAPACKE_dtrtrs(LAPACK_ROW_MAJOR, 'L', 'N', 'N',
-                            tiled->side_blk, tiled->side_blk, A_k_k,
-                            tiled->side_blk, A_m_k, tiled->side_blk);
-#else
 
       cblas_dtrsm(CblasRowMajor, CblasRight, CblasLower, CblasTrans,
                   CblasNonUnit, tiled->side_blk, tiled->side_blk, 1.,
                   A_k_k, tiled->side_blk, A_m_k, tiled->side_blk);
-#endif
     }
 
     for (n = k + 1; n < t; n++) {
@@ -52,7 +45,7 @@ void TiledCholesky_decompose(TiledMatrix *tiled)
       double* A_n_k;
 
       A_n_n = TiledMatrix_get_block(tiled, n, n);
-      A_n_k = TiledMatrix_get_block(tiled, n, k);
+      A_n_k = TiledMatrix_get_block(tiled, k, n);
       cblas_dsyrk(CblasRowMajor, CblasLower, CblasNoTrans,
                   tiled->side_blk, tiled->side_blk, -1.,
                   A_n_k, tiled->side_blk, 1., A_n_n, tiled->side_blk);
@@ -60,12 +53,12 @@ void TiledCholesky_decompose(TiledMatrix *tiled)
       for (m = n + 1; m < t; m++) {
         double* A_m_n, * A_m_k;
 
-        A_m_n = TiledMatrix_get_block(tiled, m, n);
-        A_m_k = TiledMatrix_get_block(tiled, m, k);
+        A_m_n = TiledMatrix_get_block(tiled, n, m);
+        A_m_k = TiledMatrix_get_block(tiled, k, m);
 
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
                     tiled->side_blk, tiled->side_blk, tiled->side_blk,
-                    1., A_m_k, tiled->side_blk, A_n_k, tiled->side_blk, 1.,
+                    -1., A_m_k, tiled->side_blk, A_n_k, tiled->side_blk, 1.,
                     A_m_n, tiled->side_blk);
       }
     }
