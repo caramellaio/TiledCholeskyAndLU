@@ -66,7 +66,7 @@ double TiledMatrix_get_val_non_tiled(const TiledMatrix* self,
   return TiledMatrix_get_at(self, blk_x, blk_y, pos_x, pos_y);
 }
 
-void TiledMatrix_print(const TiledMatrix* self, FILE *output, int print_mode)
+void TiledMatrix_print(const TiledMatrix* self, FILE *output, int print_mode, int unit)
 {
   int x, y;
   int n, m;
@@ -85,7 +85,13 @@ void TiledMatrix_print(const TiledMatrix* self, FILE *output, int print_mode)
       if (PRINT_ALL == print_mode ||
           (x >= y && PRINT_TRIANG_UPPER == print_mode) ||
           (y >= x && PRINT_TRIANG_LOWER == print_mode)) {
-        val = TiledMatrix_get_val_non_tiled(self, x, y);
+        /* unit matrices have diag = 1 */
+        if (unit && y == x) {
+          val = 1;
+        }
+        else {
+          val = TiledMatrix_get_val_non_tiled(self, x, y);
+        }
       }
       else {
         val = 0.;

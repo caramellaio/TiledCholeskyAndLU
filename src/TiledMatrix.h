@@ -6,6 +6,8 @@
 #define PRINT_TRIANG_LOWER 0
 #define PRINT_TRIANG_UPPER 1
 #define PRINT_ALL 2
+#define UNIT 1
+#define NON_UNIT ! UNIT
 
 #define PRINT_TRIANG_CHECK(p) \
   (assert(PRINT_TRIANG_LOWER <= p && PRINT_ALL >= p))
@@ -33,7 +35,8 @@ double TiledMatrix_get_val_non_tiled(const TiledMatrix* self,
 
 void TiledMatrix_print(const TiledMatrix* self,
                        FILE *output,
-                       int print_mode);
+                       int print_mode,
+                       int unit);
 
 #if 0
 void TiledMatrix_set_triangular_part(TiledMatrix* self, TriangPart p,
