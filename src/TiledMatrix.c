@@ -101,3 +101,19 @@ void TiledMatrix_print(const TiledMatrix* self, FILE *output, int print_mode, in
     }
   }
 }
+
+int TiledMatrix_to_full(const TiledMatrix* self, double *full, int size)
+{
+  assert(0 < size);
+
+  if (size != self->n_blk * self->side_blk) {
+    printf("Incorrect size!!!\n");
+    return 1;
+  }
+
+  /* TODO[AB]: Complete... */
+
+  assert(0);
+
+  return 0;
+}
