@@ -53,7 +53,7 @@ void TiledLU_decompose(TiledMatrix *tiled, TiledMatrix* tiled_pm)
 #if 1
       if (-1 != k1 && -1 != k2) {
         LAPACKE_dlaswp(LAPACK_ROW_MAJOR, tiled->side_blk, A_k_i, tiled->side_blk,
-                       1, tiled->side_blk, ipiv, 1);
+                       1, tiled->side_blk, ipiv, -1);
       }
       else {
         /* check correct input */
@@ -75,10 +75,10 @@ void TiledLU_decompose(TiledMatrix *tiled, TiledMatrix* tiled_pm)
 
       A_i_k = TiledMatrix_get_block(tiled, k, i);
 
-#if 0
+#if 1
       if (-1 != k1 && -1 != k2) {
         LAPACKE_dlaswp(LAPACK_ROW_MAJOR, tiled->side_blk, A_i_k, tiled->side_blk,
-                       1, tiled->side_blk, ipiv, 1);
+                       1, tiled->side_blk, ipiv, -1);
       }
       else {
         /* check correct input */
