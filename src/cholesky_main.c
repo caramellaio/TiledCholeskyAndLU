@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 
   free(tiled.data);
 
-#if 1
+#if 0
   f = fopen(argv[1], "r");
   rv = Utils_get_length_infos(f, &tiled, &n, &m);
   tiled.side_blk = n;

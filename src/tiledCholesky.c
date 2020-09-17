@@ -3,7 +3,10 @@
 #include <cblas.h>
 #include "tiledCholesky.h"
 
+#if 0
 #define VERBOSE
+#endif
+
 void TiledCholesky_decompose(TiledMatrix *tiled)
 {
   int m_blk, n_blk;
@@ -29,6 +32,8 @@ void TiledCholesky_decompose(TiledMatrix *tiled)
     printf("Printing matrix after %d-th dpotrf:\n", k);
     TiledMatrix_print(tiled, stdout, PRINT_TRIANG_LOWER, NON_UNIT);
 #endif
+
+    #pragma omp parallel for shared(tiled)
     for (m = k + 1; m < t; m++) {
       double* A_m_k;
 
@@ -40,6 +45,7 @@ void TiledCholesky_decompose(TiledMatrix *tiled)
                   A_k_k, tiled->side_blk, A_m_k, tiled->side_blk);
     }
 
+    #pragma omp parallel for shared(tiled)
     for (n = k + 1; n < t; n++) {
       double* A_n_n;
       double* A_n_k;
@@ -50,6 +56,7 @@ void TiledCholesky_decompose(TiledMatrix *tiled)
                   tiled->side_blk, tiled->side_blk, -1.,
                   A_n_k, tiled->side_blk, 1., A_n_n, tiled->side_blk);
 
+      #pragma omp parallel for shared(tiled)
       for (m = n + 1; m < t; m++) {
         double* A_m_n, * A_m_k;
 
