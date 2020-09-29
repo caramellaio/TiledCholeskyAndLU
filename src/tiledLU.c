@@ -2,10 +2,13 @@
 #include <lapacke.h>
 #include <cblas.h>
 #include "tiledLU.h"
+#include "utils.h"
 
 static void print_ipiv(int *ipiv, FILE* output, int size);
 
 static void calc_k1_k2(int *ipiv, int* k1, int* k2, int size);
+
+static void lu_decompose(double * matrix, int size);
 
 #define VERBOSE
 void TiledLU_decompose(TiledMatrix *tiled, TiledMatrix* tiled_pm)
@@ -30,6 +33,7 @@ void TiledLU_decompose(TiledMatrix *tiled, TiledMatrix* tiled_pm)
 
     A_k_k = TiledMatrix_get_block(tiled, k, k);
 
+#if 0
     /* LU decomposition of A[k, k] */
     info = LAPACKE_dgetrf(LAPACK_ROW_MAJOR, tiled->side_blk, tiled->side_blk,
                           A_k_k, tiled->side_blk, ipiv);
@@ -42,6 +46,9 @@ void TiledLU_decompose(TiledMatrix *tiled, TiledMatrix* tiled_pm)
     print_ipiv(ipiv, stdout, tiled->side_blk);
     calc_k1_k2(ipiv, &k1, &k2, tiled->side_blk);
 
+#endif
+    lu_decompose(A_k_k, tiled->side_blk);
+
     #pragma omp parallel for shared(tiled, ipiv)
     for (i = k + 1; i < t; i++) {
       double* A_k_i;
@@ -50,7 +57,7 @@ void TiledLU_decompose(TiledMatrix *tiled, TiledMatrix* tiled_pm)
       A_k_i = TiledMatrix_get_block(tiled, i, k);
 
 
-#if 1
+#if 0
       if (-1 != k1 && -1 != k2) {
         LAPACKE_dlaswp(LAPACK_ROW_MAJOR, tiled->side_blk, A_k_i, tiled->side_blk,
                        1, tiled->side_blk, ipiv, -1);
@@ -75,7 +82,7 @@ void TiledLU_decompose(TiledMatrix *tiled, TiledMatrix* tiled_pm)
 
       A_i_k = TiledMatrix_get_block(tiled, k, i);
 
-#if 1
+#if 0
       if (-1 != k1 && -1 != k2) {
         LAPACKE_dlaswp(LAPACK_ROW_MAJOR, tiled->side_blk, A_i_k, tiled->side_blk,
                        1, tiled->side_blk, ipiv, -1);
@@ -159,6 +166,46 @@ static void calc_k1_k2(int *ipiv, int* k1, int* k2, int size)
 
       /* last element */
       *k2 = i;
+    }
+  }
+}
+
+static void lu_decompose(double * matrix, int size)
+{
+  for(int j = 0; j < size; j++) {
+    for(int i = 0; i < size; i++) {
+      if(i<=j) {
+        /* compute U part */
+
+        //U[i][j]=A[i][j];
+        double alpha;
+
+        alpha = MATRIX_AT(matrix, size, j, i);
+
+        for(int k=0; k < i; k++) {
+          //U[i][j]-=L[i][k]*U[k][j];
+          alpha -= MATRIX_AT(matrix, size, k, i) * MATRIX_AT(matrix, size, j, k);
+        }
+
+        MATRIX_AT(matrix, size, j, i) = alpha;
+      }
+      else {
+        /* compute L part */
+        double alpha;
+
+        alpha = MATRIX_AT(matrix, size, j, i);
+        //L[i][j]=A[i][j];
+
+        for(int k = 0; k <= j - 1; k++) {
+          //L[i][j]-=L[i][k]*U[k][j];
+          alpha -= MATRIX_AT(matrix, size, k, i) * MATRIX_AT(matrix, size, j, k);
+        }
+
+        MATRIX_AT(matrix, size, j, i) = alpha;
+
+        // L[i][j]/=U[j][j];
+        MATRIX_AT(matrix, size, j, i) /= MATRIX_AT(matrix, size, j, j);
+      }
     }
   }
 }
