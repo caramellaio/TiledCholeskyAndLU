@@ -3,10 +3,10 @@ import numpy
 from argparse import ArgumentParser
 
 def generate_pos_def_matrix(out_path, matrix_size, tile_size):
-  eigen_mean = 2
   A = random.rand(matrix_size, matrix_size)
-  B = numpy.dot(A.transpose(), numpy.identity(matrix_size) * eigen_mean)
-  B = numpy.dot(B, A)
+  B = numpy.dot(A.transpose(), A)
+
+  numpy.set_printoptions(threshold=numpy.inf)
 
   with open(out_path, "w") as out_file:
     # first write the header

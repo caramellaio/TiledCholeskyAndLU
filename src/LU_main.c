@@ -41,9 +41,10 @@ int main(int argc, char **argv)
     goto main_end;
   }
 
+#if 0
   printf("Printing input matrix:\n");
   TiledMatrix_print(&tiled, stdout, PRINT_ALL, NON_UNIT);
-
+#endif
   fclose(f);
 
   printf("Calling tiled LU decomposition...\n");
@@ -52,12 +53,13 @@ int main(int argc, char **argv)
 
   printf("Tiled LU decomposition completed.\n");
 
+#if 0
   printf("Printing resulting matrices: \n");
   printf("Printing L: \n");
   TiledMatrix_print(&tiled, stdout, PRINT_TRIANG_LOWER, UNIT);
   printf("Printing U: \n");
   TiledMatrix_print(&tiled, stdout, PRINT_TRIANG_UPPER, NON_UNIT);
-
+#endif
   free(tiled.data);
 
 #if 0
