@@ -4,8 +4,11 @@ import os
 import threading
 
 SHELL_SCRIPT_NAME = "exp_eval.sh"
+RES_FOLDER_NAME = "results"
 DEF_OUT_DIR = "exp_eval"
-BIN_FILES = ["TiledLU", "TiledLUOMP", "TiledCholesky", "TiledCholeskyOMP"]
+BIN_FILES = ["TiledLU", "TiledLUOMP", "TiledCholesky", "TiledCholeskyOMP", "lapackCholesky", "lapackLU", "readMatrix"]
+TOOL_CODES = ["tl", "tlA", "tc", "tcA", "lc", "ll", "or"]
+OMP_THREADS="OMP_NUM_THREADS"
 
 def generate_matrices(start, delta, tile_size, num_exp, out_dir):
   for i in range(num_exp):
@@ -13,14 +16,15 @@ def generate_matrices(start, delta, tile_size, num_exp, out_dir):
     out_path = os.path.join(out_dir, "%d_%d.txt" % (matrix_size, tile_size))
 
     print("Generating matrix with size: %d" % matrix_size)
-    gen_pos_def_m_async(out_path, matrix_size, tile_size)
+    #gen_pos_def_m_async(out_path, matrix_size, tile_size)
+    gen_pos_def.generate_pos_def_matrix(out_path, matrix_size, tile_size)
 
 def gen_pos_def_m_async(out_path, matrix_size, tile_size):
   thr = threading.Thread(target=gen_pos_def.generate_pos_def_matrix,
                          args=(out_path, matrix_size, tile_size), kwargs={})
   thr.start()
 
-def gen_shell_script(start, delta, tile_size, num_exp, out_dir, executables):
+def gen_shell_script(start, delta, tile_size, num_exp, out_dir, executables, threads):
   script = os.path.join(out_dir, SHELL_SCRIPT_NAME)
 
   with open(script, "w") as script_w:
@@ -29,8 +33,13 @@ def gen_shell_script(start, delta, tile_size, num_exp, out_dir, executables):
 
       j = 0
       for tool in executables:
-        script_w.write("(time %s %d_%d.txt) 2> time_%d_%s.txt\n" %
-                       (tool, matrix_size, tile_size, i, BIN_FILES[j]))
+        # specify thread number
+        if TOOL_CODES[j][-1] == 'A':
+          tool = "%s=%d %s" % (OMP_THREADS, threads, tool)
+
+        script_w.write("(time %s %d_%d.txt) 2> %s/%d_%s\n" %
+                       (tool, matrix_size, tile_size, RES_FOLDER_NAME,
+                        matrix_size, TOOL_CODES[j]))
         j += 1
 
 
@@ -46,14 +55,15 @@ def check_params(args):
 
   if os.path.exists(args.out_dir):
     if os.path.isdir(args.out_dir):
-      print("Error: directory %s already exists.\n" % args.out_dir)
+      print("Warning: directory %s already exists, writing there.\n" % args.out_dir)
     else:
       print("Error: %s exists and it is a file.\n" % args.out_dir)
+      rv = False
 
-    rv = False
   else:
     print("Generating output folder %s\n" % args.out_dir)
     os.mkdir(args.out_dir)
+    os.mkdir(os.path.join(args.out_dir, RES_FOLDER_NAME))
 
 
   for tool in BIN_FILES:
@@ -80,6 +90,7 @@ if __name__ == "__main__":
   parser.add_argument("-a", "--avoid-matrix-gen", type=bool, default=False, help="skip matrices generation")
   parser.add_argument("-k", "--avoid-script-gen", type=bool, default=False, help="skip script generation")
   parser.add_argument("-b", "--bin-folder", type=str, default= "../src", help="tools folder")
+  parser.add_argument("-c", "--num-cores", type=int, default= 4, help="number of cores")
 
 
   args = parser.parse_args()
@@ -103,7 +114,7 @@ if __name__ == "__main__":
 
     executables = [os.path.join(args.bin_folder, tool) for tool in BIN_FILES]
     gen_shell_script(args.start, args.delta_size, args.tile_size,
-                     args.num_exp, args.out_dir, executables)
+                     args.num_exp, args.out_dir, executables, args.num_cores)
 
     print("Shell script written in %s" % os.path.join(args.out_dir, SHELL_SCRIPT_NAME))
   else:

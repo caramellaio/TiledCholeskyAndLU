@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 
   printf("Tiled LU decomposition completed.\n");
 
-#if 0
+#if 1
   printf("Printing resulting matrices: \n");
   printf("Printing L: \n");
   TiledMatrix_print(&tiled, stdout, PRINT_TRIANG_LOWER, UNIT);

@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 
   printf("Tiled cholesky decomposition completed.\n");
 
-#if 0
+#if 1
   printf("Printing resulting matrix: \n");
   TiledMatrix_print(&tiled, stdout, PRINT_TRIANG_LOWER, NON_UNIT);
 #endif

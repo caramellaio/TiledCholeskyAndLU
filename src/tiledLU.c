@@ -49,7 +49,7 @@ void TiledLU_decompose(TiledMatrix *tiled, TiledMatrix* tiled_pm)
 #endif
     lu_decompose(A_k_k, tiled->side_blk);
 
-    #pragma omp parallel for shared(tiled, ipiv)
+    #pragma omp parallel for
     for (i = k + 1; i < t; i++) {
       double* A_k_i;
 
@@ -71,6 +71,12 @@ void TiledLU_decompose(TiledMatrix *tiled, TiledMatrix* tiled_pm)
       /* triangolar solve: case we do A[k][i] = L[k][k]^{-1} * A[k][i] */
       /* L is UNIT!!! */
       /* L[k][k] * X = A[k][i]*/
+#ifdef _OPENMP
+#ifdef DEBUG
+      printf("Thread %d is calling DTRSM on A[%d][%d] and A[%d][%d]\n",
+              omp_get_thread_num(), k, i, k, k);
+#endif
+#endif
       cblas_dtrsm(CblasRowMajor, CblasLeft, CblasLower, CblasNoTrans,
                   CblasUnit, tiled->side_blk, tiled->side_blk, 1.,
                   A_k_k, tiled->side_blk, A_k_i, tiled->side_blk);
@@ -95,6 +101,12 @@ void TiledLU_decompose(TiledMatrix *tiled, TiledMatrix* tiled_pm)
 #endif
       /* if I do it "COLUMN_MAJOR" it applies to columns??? */
 
+#ifdef _OPENMP
+#ifdef DEBUG
+      printf("Thread %d is calling DTRSM on A[%d][%d] and A[%d][%d]\n",
+              omp_get_thread_num(), k, i, k, k);
+#endif
+#endif
       /* triangolar solve: case we do A[i][k] = A[i][k] * U[k][k]^{-1} */
       /* X * U[k][k] = A[i][k] => X = A[i][k] * U[k][k]^{-1} */
       /* re-check here. */
@@ -103,7 +115,6 @@ void TiledLU_decompose(TiledMatrix *tiled, TiledMatrix* tiled_pm)
                   A_k_k, tiled->side_blk, A_i_k, tiled->side_blk);
     }
 
-    #pragma omp parallel for shared(tiled, ipiv)
     for (i = k +1; i < t; i++) {
       double *A_i_k;
 
@@ -116,6 +127,12 @@ void TiledLU_decompose(TiledMatrix *tiled, TiledMatrix* tiled_pm)
         A_i_j = TiledMatrix_get_block(tiled, j, i);
         A_k_j = TiledMatrix_get_block(tiled, j, k);
 
+#ifdef _OPENMP
+#ifdef DEBUG
+        printf("Thread %d is calling DGEMM on A[%d][%d], A[%d][%d] and A[%d][%d]\n",
+                omp_get_thread_num(), i, k, k, j, i, j);
+#endif
+#endif
         /* 100% sure... */
         /* A[i][j] = A[i][j] - A[i][k] * A[k][j] */
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
